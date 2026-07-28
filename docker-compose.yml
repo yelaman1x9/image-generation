@@ -1,0 +1,42 @@
+services:
+  # Web UI on http://localhost:8000 - CPU build. Works, but a 512x512 image takes
+  # minutes rather than under a second; use the gpu profile if you have the card.
+  web:
+    build: .
+    image: image-generation:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+
+  # Same app on CUDA:
+  #   docker compose --profile gpu up web-gpu
+  web-gpu:
+    build:
+      context: .
+      args:
+        TORCH_INDEX: https://download.pytorch.org/whl/cu126
+    image: image-generation:gpu
+    profiles: ["gpu"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # One-shot CLI:
+  #   docker compose run --rm cli "a red fox in fresh snow"
+  cli:
+    build: .
+    image: image-generation:latest
+    profiles: ["cli"]
+    volumes:
+      - ./data:/app/data
+    entrypoint: ["python", "src/cli.py"]
+    command: ["info"]

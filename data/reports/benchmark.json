@@ -1,0 +1,174 @@
+{
+  "device": "cuda (NVIDIA GeForce RTX 2060 SUPER)",
+  "prompts": [
+    "a red fox sitting in fresh snow, wildlife photograph",
+    "an astronaut riding a horse on the moon",
+    "a bowl of ramen on a wooden table, food photography",
+    "a lighthouse in a storm, oil painting",
+    "a vintage bicycle leaning against a brick wall",
+    "a mountain lake at sunrise, wide angle landscape"
+  ],
+  "seeds": [
+    1234,
+    5678
+  ],
+  "sweeps": {
+    "steps_turbo": [
+      {
+        "model": "turbo",
+        "steps": 1,
+        "guidance": null,
+        "adherence_mean": 0.3379,
+        "adherence_sd": 0.0171,
+        "seconds_median": 0.23,
+        "peak_vram_mb": 3247.0
+      },
+      {
+        "model": "turbo",
+        "steps": 2,
+        "guidance": null,
+        "adherence_mean": 0.3371,
+        "adherence_sd": 0.0178,
+        "seconds_median": 0.3,
+        "peak_vram_mb": 3855.3
+      },
+      {
+        "model": "turbo",
+        "steps": 4,
+        "guidance": null,
+        "adherence_mean": 0.3328,
+        "adherence_sd": 0.0202,
+        "seconds_median": 0.439,
+        "peak_vram_mb": 3855.3
+      },
+      {
+        "model": "turbo",
+        "steps": 8,
+        "guidance": null,
+        "adherence_mean": 0.327,
+        "adherence_sd": 0.022,
+        "seconds_median": 0.72,
+        "peak_vram_mb": 3855.3
+      }
+    ],
+    "steps_base": [
+      {
+        "model": "base",
+        "steps": 4,
+        "guidance": null,
+        "adherence_mean": 0.2848,
+        "adherence_sd": 0.0577,
+        "seconds_median": 0.76,
+        "peak_vram_mb": 3413.8
+      },
+      {
+        "model": "base",
+        "steps": 8,
+        "guidance": null,
+        "adherence_mean": 0.3095,
+        "adherence_sd": 0.027,
+        "seconds_median": 1.242,
+        "peak_vram_mb": 3413.8
+      },
+      {
+        "model": "base",
+        "steps": 16,
+        "guidance": null,
+        "adherence_mean": 0.3347,
+        "adherence_sd": 0.0208,
+        "seconds_median": 2.228,
+        "peak_vram_mb": 3413.8
+      },
+      {
+        "model": "base",
+        "steps": 25,
+        "guidance": null,
+        "adherence_mean": 0.3339,
+        "adherence_sd": 0.0214,
+        "seconds_median": 3.394,
+        "peak_vram_mb": 3413.8
+      },
+      {
+        "model": "base",
+        "steps": 40,
+        "guidance": null,
+        "adherence_mean": 0.3363,
+        "adherence_sd": 0.021,
+        "seconds_median": 5.284,
+        "peak_vram_mb": 3413.8
+      }
+    ],
+    "guidance_turbo": [
+      {
+        "model": "turbo",
+        "steps": 2,
+        "guidance": 0.0,
+        "adherence_mean": 0.3371,
+        "adherence_sd": 0.0178,
+        "seconds_median": 0.33,
+        "peak_vram_mb": 3855.4,
+        "_axis": "guidance"
+      },
+      {
+        "model": "turbo",
+        "steps": 2,
+        "guidance": 1.0,
+        "adherence_mean": 0.3371,
+        "adherence_sd": 0.0178,
+        "seconds_median": 0.329,
+        "peak_vram_mb": 3855.4,
+        "_axis": "guidance"
+      },
+      {
+        "model": "turbo",
+        "steps": 2,
+        "guidance": 3.0,
+        "adherence_mean": 0.3431,
+        "adherence_sd": 0.0193,
+        "seconds_median": 0.422,
+        "peak_vram_mb": 3855.8,
+        "_axis": "guidance"
+      },
+      {
+        "model": "turbo",
+        "steps": 2,
+        "guidance": 7.5,
+        "adherence_mean": 0.3307,
+        "adherence_sd": 0.0261,
+        "seconds_median": 0.42,
+        "peak_vram_mb": 3855.8,
+        "_axis": "guidance"
+      },
+      {
+        "model": "turbo",
+        "steps": 2,
+        "guidance": 12.0,
+        "adherence_mean": 0.312,
+        "adherence_sd": 0.0265,
+        "seconds_median": 0.409,
+        "peak_vram_mb": 3855.8,
+        "_axis": "guidance"
+      }
+    ]
+  },
+  "headline": {
+    "turbo_1_step": {
+      "model": "turbo",
+      "steps": 1,
+      "guidance": null,
+      "adherence_mean": 0.3379,
+      "adherence_sd": 0.0171,
+      "seconds_median": 0.23,
+      "peak_vram_mb": 3247.0
+    },
+    "base_25_steps": {
+      "model": "base",
+      "steps": 25,
+      "guidance": null,
+      "adherence_mean": 0.3339,
+      "adherence_sd": 0.0214,
+      "seconds_median": 3.394,
+      "peak_vram_mb": 3413.8
+    }
+  }
+}

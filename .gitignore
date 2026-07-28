@@ -1,0 +1,9 @@
+# Generated images and the Hugging Face cache. The reports in data/reports are
+# committed on purpose: they are the evidence for every table in the README.
+data/outputs/
+data/hf/
+
+__pycache__/
+*.pyc
+.venv/
+.DS_Store

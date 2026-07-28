@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>image-generation</title>
+<style>
+  :root {
+    --bg: #0e1116; --panel: #161b22; --panel-2: #1c2230; --line: #2a3140;
+    --ink: #e6edf3; --muted: #8b949e; --dim: #6e7681;
+    --accent: #a371f7; --ok: #3fb950; --warn: #d29922; --bad: #f85149;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  header h1 { margin: 0 0 4px; font-size: 25px; letter-spacing: -.02em; }
+  header p { margin: 0; color: var(--muted); }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 24px; }
+  .fact {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 7px;
+    padding: 7px 11px; font: 12px/1.3 var(--mono); color: var(--muted);
+  }
+  .fact b { color: var(--ink); font-weight: 600; }
+
+  nav { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 22px;
+        flex-wrap: wrap; }
+  nav button {
+    background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted);
+    padding: 10px 16px; font-size: 14px; cursor: pointer; font-family: inherit;
+  }
+  nav button:hover { color: var(--ink); }
+  nav button.on { color: var(--ink); border-bottom-color: var(--accent); }
+
+  section { display: none; }
+  section.on { display: block; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 18px; margin-bottom: 16px;
+  }
+  .panel h2 { margin: 0 0 4px; font-size: 15px; }
+  .panel .sub { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+
+  textarea, input[type=text], input[type=number], select {
+    background: var(--panel-2); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 7px; padding: 9px 11px; font-family: inherit; font-size: 14px;
+    width: 100%; resize: vertical;
+  }
+  textarea:focus, input:focus, select:focus { outline: 1px solid var(--accent); }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-top: 12px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; color: var(--muted); }
+  .field.narrow { width: 108px; }
+  .field.mid { width: 190px; }
+
+  button.go, .ghost {
+    font-family: inherit; font-size: 13px; border-radius: 7px; cursor: pointer;
+    padding: 10px 18px; border: 1px solid var(--line); white-space: nowrap;
+  }
+  button.go { background: var(--accent); color: #10061f; border-color: transparent; font-weight: 600; }
+  button.go:disabled { opacity: .45; cursor: default; }
+  .ghost { background: var(--panel-2); color: var(--ink); }
+  .ghost:hover { border-color: var(--accent); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px;
+    padding: 7px 12px; font-size: 12.5px; color: var(--ink); cursor: pointer;
+    font-family: inherit; text-align: left;
+  }
+  .chip:hover { border-color: var(--accent); }
+
+  .shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+  .shot { background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .shot img { width: 100%; display: block; aspect-ratio: 1; object-fit: cover; background: #000; }
+  .shot .meta { padding: 8px 10px; font: 11.5px/1.5 var(--mono); color: var(--muted); }
+  .shot .meta b { color: var(--ink); }
+  .shot.best { border-color: rgba(63,185,80,.5); }
+
+  .note {
+    border-left: 2px solid var(--warn); padding: 10px 14px; margin: 14px 0 0;
+    background: rgba(210,153,34,.07); border-radius: 0 7px 7px 0;
+    font-size: 13px; color: var(--muted);
+  }
+  .note b { color: var(--ink); }
+  .note.err { border-left-color: var(--bad); background: rgba(248,81,73,.08); }
+  .note.good { border-left-color: var(--ok); background: rgba(63,185,80,.07); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  td.n, th.n { text-align: right; font-family: var(--mono); }
+
+  .spin { color: var(--muted); font-size: 13px; }
+  figure { margin: 0; }
+  .sheet { width: 100%; border-radius: 9px; border: 1px solid var(--line); display: block; }
+  footer { margin-top: 40px; color: var(--dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>image-generation</h1>
+    <p>Stable Diffusion, distilled and not, with the step and guidance settings measured rather than inherited.</p>
+    <div class="facts" id="facts"></div>
+  </header>
+
+  <nav>
+    <button class="on" data-tab="make">Generate</button>
+    <button data-tab="compare">Compare models</button>
+    <button data-tab="sweep">Sweep a dial</button>
+    <button data-tab="findings">Findings</button>
+  </nav>
+
+  <!-- -------------------------------------------------------------- generate -->
+  <section class="on" id="tab-make">
+    <div class="panel">
+      <h2>Prompt</h2>
+      <p class="sub">Defaults follow the selected model, not a global habit — 2 steps and no guidance for the distilled one, 25 steps and 7.5 for the baseline.</p>
+      <textarea id="prompt" rows="2" placeholder="a red fox sitting in fresh snow, wildlife photograph"></textarea>
+      <div class="row">
+        <div class="field mid"><label>model</label><select id="model"></select></div>
+        <div class="field narrow"><label>steps</label><input type="number" id="steps" min="1" max="60"></div>
+        <div class="field narrow"><label>guidance</label><input type="number" id="guidance" min="0" max="20" step="0.5"></div>
+        <div class="field narrow"><label>seed</label><input type="number" id="seed" placeholder="random"></div>
+        <div class="field narrow"><label>count</label><input type="number" id="count" value="1" min="1" max="4"></div>
+        <button class="go" id="run">Generate</button>
+      </div>
+      <div class="row">
+        <div class="field mid"><label>negative prompt</label><input type="text" id="negative" placeholder="needs guidance above 1"></div>
+        <div class="field mid"><label>start from an image (optional)</label><input type="file" id="init" accept="image/*"></div>
+        <div class="field narrow"><label>strength</label><input type="number" id="strength" value="0.6" min="0.1" max="1" step="0.05"></div>
+      </div>
+      <div id="advice"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Try one of these</h2>
+      <div class="chips" id="promptChips"></div>
+    </div>
+
+    <div id="makeOut"></div>
+  </section>
+
+  <!-- --------------------------------------------------------------- compare -->
+  <section id="tab-compare">
+    <div class="panel">
+      <h2>Same prompt, same seed, both models at their own correct settings</h2>
+      <p class="sub">Not a fair fight on step count — that is the point. Each model runs where it is meant to run.</p>
+      <textarea id="cmpPrompt" rows="2" placeholder="a lighthouse in a storm, oil painting"></textarea>
+      <div class="row">
+        <div class="field narrow"><label>seed</label><input type="number" id="cmpSeed" placeholder="random"></div>
+        <button class="go" id="runCompare">Compare</button>
+      </div>
+    </div>
+    <div id="compareOut"></div>
+  </section>
+
+  <!-- ----------------------------------------------------------------- sweep -->
+  <section id="tab-sweep">
+    <div class="panel">
+      <h2>Hold everything still and move one dial</h2>
+      <p class="sub">Same seed throughout, so any difference is the dial and nothing else.</p>
+      <textarea id="swpPrompt" rows="2" placeholder="a bowl of ramen on a wooden table, food photography"></textarea>
+      <div class="row">
+        <div class="field mid"><label>model</label><select id="swpModel"></select></div>
+        <div class="field mid"><label>dial</label>
+          <select id="swpAxis">
+            <option value="steps">steps</option>
+            <option value="guidance">guidance</option>
+          </select>
+        </div>
+        <div class="field narrow"><label>seed</label><input type="number" id="swpSeed" placeholder="random"></div>
+        <button class="go" id="runSweep">Run the sweep</button>
+      </div>
+      <div class="note">Adherence is CLIP cosine between the image and the prompt. It measures
+        whether the picture shows what was asked for and <b>nothing at all</b> about whether it
+        looks good — run the guidance sweep and watch it fail to notice.</div>
+    </div>
+    <div id="sweepOut"></div>
+  </section>
+
+  <!-- -------------------------------------------------------------- findings -->
+  <section id="tab-findings">
+    <div class="panel" id="findingsPanel"><p class="spin">Loading the benchmark…</p></div>
+  </section>
+
+  <footer>
+    Pretrained SD-Turbo and Stable Diffusion 1.5 via <code>diffusers</code>, no fine-tuning.
+    Generated images are synthetic and should be labelled as such.
+  </footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let CONFIG = null;
+
+const SAMPLE_PROMPTS = [
+  "a red fox sitting in fresh snow, wildlife photograph",
+  "an astronaut riding a horse on the moon",
+  "a bowl of ramen on a wooden table, food photography",
+  "a lighthouse in a storm, oil painting",
+  "a vintage bicycle leaning against a brick wall",
+  "a mountain lake at sunrise, wide angle landscape",
+];
+
+async function boot() {
+  CONFIG = await (await fetch("/api/config")).json();
+  renderFacts();
+  renderModels();
+  renderChips();
+  renderFindings();
+  applyModelDefaults();
+}
+
+function renderFacts() {
+  const bits = [`device <b>${CONFIG.device}</b>`];
+  for (const [key, m] of Object.entries(CONFIG.models)) {
+    bits.push(`${key} <b>${m.steps}</b> steps · guidance <b>${m.guidance}</b>`);
+  }
+  if (CONFIG.benchmark?.headline) {
+    const h = CONFIG.benchmark.headline;
+    bits.push(`turbo 1 step <b>${h.turbo_1_step.seconds_median}s</b> vs SD1.5 25 steps <b>${h.base_25_steps.seconds_median}s</b>`);
+  }
+  $("facts").innerHTML = bits.map(b => `<div class="fact">${b}</div>`).join("");
+}
+
+function renderModels() {
+  const options = Object.entries(CONFIG.models).map(([key, m]) =>
+    `<option value="${key}" ${key === CONFIG.default_model ? "selected" : ""}>${m.label}</option>`).join("");
+  $("model").innerHTML = options;
+  $("swpModel").innerHTML = options;
+}
+
+function applyModelDefaults() {
+  const m = CONFIG.models[$("model").value];
+  $("steps").value = m.steps;
+  $("steps").max = m.max_steps;
+  $("guidance").value = m.guidance;
+  showAdvice();
+}
+$("model").onchange = applyModelDefaults;
+$("steps").oninput = showAdvice;
+$("guidance").oninput = showAdvice;
+
+function showAdvice() {
+  // Mirrors engine.advice() so the warning appears while the dial is being moved, not
+  // after the image has already been paid for. The server remains the authority.
+  const key = $("model").value, m = CONFIG.models[key];
+  const steps = Number($("steps").value), guidance = Number($("guidance").value);
+  const notes = [];
+  if (m.distilled && guidance > 1)
+    notes.push(`Guidance ${guidance} on a distilled model. It washes out by 3 and posterises by 7.5 — and prompt-adherence scores barely register it, so this one is judged by eye.`);
+  if (m.distilled && steps > 4)
+    notes.push(`${steps} steps on a distilled model. Adherence measured highest at 1 step and falls from there, while the time climbs.`);
+  if (!m.distilled && steps < 10)
+    notes.push(`${steps} steps without distillation is undercooked — SD 1.5 measured 0.285 adherence at 4 steps against 0.335 at 16.`);
+  if (!m.distilled && guidance <= 1)
+    notes.push("Guidance at or below 1 switches classifier-free guidance off, which SD 1.5 depends on.");
+  $("advice").innerHTML = notes.map(n => `<div class="note">${n}</div>`).join("");
+}
+
+function renderChips() {
+  $("promptChips").innerHTML = "";
+  SAMPLE_PROMPTS.forEach(p => {
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = p;
+    b.onclick = () => { $("prompt").value = p; $("cmpPrompt").value = p; $("swpPrompt").value = p; };
+    $("promptChips").appendChild(b);
+  });
+}
+
+function shot(entry, { best = false, caption = "" } = {}) {
+  return `
+    <figure class="shot ${best ? "best" : ""}">
+      <img src="/api/outputs/${entry.file}" alt="" loading="lazy">
+      <div class="meta">
+        ${caption ? `<b>${caption}</b><br>` : ""}
+        adherence <b>${entry.adherence?.toFixed(4) ?? "—"}</b><br>
+        ${entry.steps} steps · guidance ${entry.guidance}<br>
+        ${entry.seconds.toFixed(2)}s · seed ${entry.seed}
+      </div>
+    </figure>`;
+}
+
+// ---------------------------------------------------------------- generate
+$("run").onclick = async () => {
+  const prompt = $("prompt").value.trim();
+  if (!prompt) return fail("makeOut", "A prompt is required.");
+
+  const count = Math.max(1, Math.min(4, Number($("count").value) || 1));
+  $("makeOut").innerHTML = `<div class="panel spin">Generating ${count} image${count > 1 ? "s" : ""}…</div>`;
+
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    const body = new FormData();
+    body.append("prompt", prompt);
+    body.append("model", $("model").value);
+    body.append("steps", $("steps").value);
+    body.append("guidance", $("guidance").value);
+    body.append("negative", $("negative").value);
+    body.append("strength", $("strength").value);
+    const seed = $("seed").value;
+    if (seed !== "") body.append("seed", String(Number(seed) + i));
+    if ($("init").files[0]) body.append("init", $("init").files[0]);
+
+    const response = await fetch("/api/generate", { method: "POST", body });
+    const data = await response.json();
+    if (!response.ok) return fail("makeOut", data.detail);
+    results.push(data);
+  }
+
+  const notes = [...new Set(results.flatMap(r => r.notes))];
+  $("makeOut").innerHTML = `
+    <div class="panel">
+      <div class="shots">${results.map(r => shot(r)).join("")}</div>
+      ${notes.map(n => `<div class="note">${n}</div>`).join("")}
+    </div>`;
+};
+
+// ---------------------------------------------------------------- compare
+$("runCompare").onclick = async () => {
+  const prompt = $("cmpPrompt").value.trim();
+  if (!prompt) return fail("compareOut", "A prompt is required.");
+  $("compareOut").innerHTML = `<div class="panel spin">Running both models — the baseline takes a few seconds…</div>`;
+
+  const body = new FormData();
+  body.append("prompt", prompt);
+  if ($("cmpSeed").value !== "") body.append("seed", $("cmpSeed").value);
+
+  const response = await fetch("/api/compare", { method: "POST", body });
+  const data = await response.json();
+  if (!response.ok) return fail("compareOut", data.detail);
+
+  const [fast, base] = data.results;
+  const better = base.adherence > fast.adherence;
+  $("compareOut").innerHTML = `
+    <div class="panel">
+      <div class="shots">
+        ${data.results.map(r => shot(r, { caption: r.label })).join("")}
+      </div>
+      <div class="note ${better ? "" : "good"}">
+        <b>${base.slower_by}×</b> the time for
+        <b>${(base.adherence - fast.adherence >= 0 ? "+" : "")}${(base.adherence - fast.adherence).toFixed(4)}</b>
+        adherence. Both used seed ${data.seed}. Adherence is prompt match only — for
+        <i>which picture do you prefer</i>, there is no substitute for looking.
+      </div>
+    </div>`;
+};
+
+// ---------------------------------------------------------------- sweep
+$("runSweep").onclick = async () => {
+  const prompt = $("swpPrompt").value.trim();
+  if (!prompt) return fail("sweepOut", "A prompt is required.");
+  const axis = $("swpAxis").value;
+  $("sweepOut").innerHTML = `<div class="panel spin">Sweeping ${axis}…</div>`;
+
+  const body = new FormData();
+  body.append("prompt", prompt);
+  body.append("model", $("swpModel").value);
+  body.append("axis", axis);
+  if ($("swpSeed").value !== "") body.append("seed", $("swpSeed").value);
+
+  const response = await fetch("/api/sweep", { method: "POST", body });
+  const data = await response.json();
+  if (!response.ok) return fail("sweepOut", data.detail);
+
+  const best = Math.max(...data.results.map(r => r.adherence));
+  const fastest = Math.min(...data.results.map(r => r.seconds));
+  const rows = data.results.map(r => `
+    <tr>
+      <td class="n">${r.value}</td>
+      <td class="n">${r.adherence.toFixed(4)}</td>
+      <td class="n">${(r.adherence - best >= 0 ? "+" : "")}${(r.adherence - best).toFixed(4)}</td>
+      <td class="n">${r.seconds.toFixed(2)}s</td>
+      <td class="n">${(r.seconds / fastest).toFixed(1)}×</td>
+    </tr>`).join("");
+
+  const winner = data.results.find(r => r.adherence === best);
+  const caution = axis === "guidance" && data.model === "turbo"
+    ? `<div class="note err"><b>Read the pictures, not the table.</b> Adherence scores
+       guidance ${winner.value} highest here, and it scores the visibly posterised runs
+       almost as well as guidance 0. The metric cannot see the damage; you can.</div>`
+    : "";
+
+  $("sweepOut").innerHTML = `
+    <div class="panel">
+      <div class="shots">${data.results.map(r =>
+        shot(r, { best: r.adherence === best, caption: `${axis} ${r.value}` })).join("")}</div>
+      <table style="margin-top:16px">
+        <tr><th class="n">${axis}</th><th class="n">adherence</th><th class="n">vs best</th>
+            <th class="n">time</th><th class="n">vs fastest</th></tr>
+        ${rows}
+      </table>
+      ${caution}
+    </div>`;
+};
+
+// ---------------------------------------------------------------- findings
+function renderFindings() {
+  const b = CONFIG.benchmark;
+  if (!b) {
+    $("findingsPanel").innerHTML = `<h2>Findings</h2>
+      <p class="sub">Run <code>python scripts/benchmark.py</code> to produce them.</p>`;
+    return;
+  }
+
+  const sweepTable = (key, dial) => {
+    const rows = b.sweeps[key];
+    if (!rows) return "";
+    const best = Math.max(...rows.map(r => r.adherence_mean));
+    const fastest = Math.min(...rows.map(r => r.seconds_median));
+    return `
+      <table style="margin-bottom:22px">
+        <tr><th class="n">${dial}</th><th class="n">adherence</th><th class="n">vs best</th>
+            <th class="n">s/image</th><th class="n">vs fastest</th></tr>
+        ${rows.map(r => `
+          <tr>
+            <td class="n">${dial === "steps" ? r.steps : r.guidance}</td>
+            <td class="n">${r.adherence_mean.toFixed(4)}</td>
+            <td class="n">${(r.adherence_mean - best >= 0 ? "+" : "")}${(r.adherence_mean - best).toFixed(4)}</td>
+            <td class="n">${r.seconds_median.toFixed(2)}</td>
+            <td class="n">${(r.seconds_median / fastest).toFixed(1)}×</td>
+          </tr>`).join("")}
+      </table>`;
+  };
+
+  const h = b.headline;
+  $("findingsPanel").innerHTML = `
+    <h2>What the benchmark found</h2>
+    <p class="sub">${b.prompts.length} prompts × ${b.seeds.length} seeds per configuration, on ${b.device}.</p>
+
+    <h3 style="font-size:14px;margin:18px 0 6px">SD-Turbo — steps</h3>
+    ${sweepTable("steps_turbo", "steps")}
+
+    <h3 style="font-size:14px;margin:18px 0 6px">Stable Diffusion 1.5 — steps</h3>
+    ${sweepTable("steps_base", "steps")}
+
+    <h3 style="font-size:14px;margin:18px 0 6px">SD-Turbo — guidance, at 2 steps</h3>
+    ${sweepTable("guidance_turbo", "guidance")}
+
+    <div class="note good">
+      <b>Headline.</b> SD-Turbo at 1 step scores ${h.turbo_1_step.adherence_mean.toFixed(4)} in
+      ${h.turbo_1_step.seconds_median.toFixed(2)}s. SD 1.5 at 25 steps scores
+      ${h.base_25_steps.adherence_mean.toFixed(4)} in ${h.base_25_steps.seconds_median.toFixed(2)}s —
+      <b>${(h.base_25_steps.seconds_median / h.turbo_1_step.seconds_median).toFixed(0)}×</b> the time for
+      ${(h.base_25_steps.adherence_mean - h.turbo_1_step.adherence_mean).toFixed(4)} adherence.
+    </div>
+    <div class="note err">
+      <b>And the limit of that metric.</b> On the guidance sweep, adherence ranks guidance 3
+      best and rates the wrecked 7.5 run within 0.006 of guidance 0. Open the contact sheet:
+      the difference is not subtle to a person, and is nearly invisible to the score.
+    </div>
+    <figure style="margin-top:16px">
+      <img class="sheet" src="/api/reports/sheets/guidance_turbo.jpg" alt="guidance contact sheet"
+           onerror="this.closest('figure').style.display='none'">
+    </figure>`;
+}
+
+// ---------------------------------------------------------------- misc
+function fail(target, message) {
+  $(target).innerHTML = `<div class="panel"><div class="note err">${message || "Something went wrong."}</div></div>`;
+}
+
+document.querySelectorAll("nav button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll("section").forEach(s =>
+      s.classList.toggle("on", s.id === `tab-${b.dataset.tab}`));
+  };
+});
+
+boot();
+</script>
+</body>
+</html>
